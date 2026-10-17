@@ -1,0 +1,29 @@
+name: Validate skills
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  plain-language-ux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check Agent Skills metadata
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("skills/plain-language-ux/SKILL.md")
+          text = p.read_text(encoding="utf-8")
+          assert text.startswith("---\n"), "Missing YAML frontmatter"
+          header = text.split("---", 2)[1]
+          assert "name: plain-language-ux" in header
+          assert "description:" in header
+          PY
+      - name: Test installer
+        run: python3 -m unittest discover -s skills/plain-language-ux/tests -v
