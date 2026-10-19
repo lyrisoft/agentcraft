@@ -9,8 +9,16 @@ Agentcraft publishes portable [Agent Skills](https://agentskills.io/) that help 
 | Skill | Purpose |
 | --- | --- |
 | [Plain Language UX](skills/plain-language-ux/) | Detect technical jargon, vague actions, ambiguous labels, unclear feedback, and inconsistent wording; recommend language that fits the intended audience without losing accuracy. |
+| [Enterprise Product UX](skills/enterprise-product-ux/) | Design and review enterprise workflows, complex data interfaces, permissions, accessibility, and operational UX. |
 
 ## Install
+
+For enterprise-product-ux:
+
+```bash
+npx skills add lyrisoft/agentcraft --skill enterprise-product-ux
+```
+
 
 Install the Plain Language UX skill in your current project using the cross-agent [skills CLI](https://github.com/vercel-labs/skills):
 
@@ -69,6 +77,12 @@ skills/
     references/
     evals/
     scripts/
+    tests/
+  enterprise-product-ux/
+    SKILL.md
+    README.md
+    references/
+    evals/
     tests/
 ```
 
