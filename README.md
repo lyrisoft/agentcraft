@@ -10,8 +10,16 @@ Agentcraft publishes portable [Agent Skills](https://agentskills.io/) that help 
 | --- | --- |
 | [Plain Language UX](skills/plain-language-ux/) | Detect technical jargon, vague actions, ambiguous labels, unclear feedback, and inconsistent wording; recommend language that fits the intended audience without losing accuracy. |
 | [Enterprise Product UX](skills/enterprise-product-ux/) | Design and review enterprise workflows, complex data interfaces, permissions, accessibility, and operational UX. |
+| [Session Isolation Security](skills/session-isolation-security/) | Assess cross-user authorization, IDOR/BOLA, tenant isolation, roles, and session lifecycle; define reproducible security regressions. |
 
 ## Install
+
+For session-isolation-security:
+
+```bash
+npx skills add lyrisoft/agentcraft --skill session-isolation-security
+```
+
 
 For enterprise-product-ux:
 
@@ -78,6 +86,9 @@ skills/
     evals/
     scripts/
     tests/
+  session-isolation-security/
+    SKILL.md
+    README.md
   enterprise-product-ux/
     SKILL.md
     README.md
