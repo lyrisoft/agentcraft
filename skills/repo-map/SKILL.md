@@ -25,12 +25,13 @@ Building maps and Git baselines does not execute the application, repository scr
 
 ## Explore
 
-- Start at Module overview. Click modules or classes and Expand contents in the details panel. Cytoscape groups nested symbols inside their parent nodes.
-- Search names and file paths. Click nodes or accessible sidebar buttons to inspect source excerpts, editor links, incoming/outgoing relationships and findings. Hover over nodes or edges for previews and extraction evidence.
-- Select a node, then use neighbours, upstream or downstream exploration with one to four relationship hops. Drag nodes or the canvas; use Fit, Arrange and zoom controls to navigate. Dragged leaf positions persist while changing views.
-- Use Security findings to show matched findings and upstream static relationships. These connections do not establish attacks.
-- Use Git change impact when a base was supplied. Green means added, amber means modified or potentially affected, red means removed. Removed nodes show baseline source and locations; do not open their location in the current tree as if unchanged.
-- Read Analysis notes and endpoint confidence. Dashed edges are inferred or removed. The canvas shows at most 500 requested nodes plus their ancestors; all eligible files remain in graph.json. Narrow large views with search or relationship traversal.
+- Start at Architecture. Skip single-folder wrapper paths automatically and show immediate source folders/files with file, endpoint and finding counts. Folder arrows aggregate static imports between the visible groups; they do not establish runtime service traffic or business-domain boundaries.
+- Click a folder to drill down. Use location breadcrumbs or Back to return. Click a file or Browse contents on a class to list its direct symbols.
+- Use Endpoints or Functions & classes to find an entry point. Catalogs and folder contents have pages of 12 items. Search names and file paths across the repository. Never render hundreds of matches and shrink them to fit.
+- Select a function or endpoint to center a focused trace. One hop is the default. Show at most 12 related nodes plus the selected node (six related nodes on narrow screens), balancing callers and dependencies. Incoming/Outgoing lists retain every relationship with pages of eight; use them to continue through connections outside the canvas. Deeper traces remain bounded and identify additional available connections.
+- Hover for previews, click for source/evidence, drag nodes, and zoom or Fit view. Keep labels at a readable scale; pan on smaller viewports instead of shrinking a large graph into an unreadable overview.
+- Use Security findings for a paged list of matched symbols, or Changes & impact for added/modified/removed and potentially affected code. Choose an item to inspect its focused relationships. Removed symbols show baseline locations and excerpts.
+- Open Analysis notes for uncertainty and unmatched findings. Dashed relationships are inferred or removed. All indexed nodes and relationships remain in graph.json; the visible graph is intentionally small.
 
 ## Evidence rules
 
@@ -46,4 +47,4 @@ Do not claim runtime traces, full framework or language coverage, automated reme
 
 Keep the entire folder together in the agent's configured skill directory, or have the agent read this SKILL.md by absolute path. No agent-specific API is required.
 
-When modifying the skill, install dev dependencies with `npm ci --ignore-scripts` and run `npm test`. Tests cover framework patterns and rejection cases, cross-file calls, SARIF, HTML escaping, Git baselines and Cytoscape interactions in DOM/headless mode. Check browser rendering separately when changing layout. Use temporary fixtures without running repository code. See [evaluation scenarios](evals/scenarios.md) for realistic tasks.
+When modifying the skill, install dev dependencies with `npm ci --ignore-scripts` and run `npm test`. Tests cover framework patterns, false-positive rejection, tooling exclusions, SARIF/HTML escaping, Git baselines, hierarchical navigation and Cytoscape interactions. A synthetic 46,000-node / 112,099-relationship fixture verifies bounded rendering, complete pagination and focused high-degree traces. Check browser rendering separately when changing layout. Use temporary fixtures without running repository code. See [evaluation scenarios](evals/scenarios.md) for realistic tasks.

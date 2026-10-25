@@ -11,6 +11,8 @@ try {
   assert(cp.execFileSync(process.execPath, [path.join(__dirname, 'analyze.cjs'), '--help']).toString().includes('--base'));
   write('package.json', JSON.stringify({ dependencies: { next: '16.0.0' } }));
   write('.gitignore', '.repo-map/\n');
+  write('.agents/skills/repo-map/scripts/ignored.ts', 'export function tool(){return 1;}');
+  write('.claude/hooks/ignored.ts', 'export function hook(){return 1;}');
   write('service.ts', `export class Store { read(){ return 1; } }\nexport function lookup(){ return new Store().read(); }\nexport function obsolete(){ return 0; }\n`);
   write('routes.ts', `import express, {Router as MakeRouter} from 'express';
 import {lookup, obsolete} from './service';
@@ -44,6 +46,7 @@ server.get('/status', handler);
   write('common.cjs', `const express=require('express'); const {Router}=require('express'); const app=express(); const router=Router(); router.get('/cjs',()=>1); app.use('/common',router);`);
   write('findings.sarif', JSON.stringify({ runs: [{ tool: { driver: { name: 'fixture' } }, results: [{ ruleId: 'TEST', level: 'error', message: { text: '</script><script>window.bad=true</script>' }, locations: [{ physicalLocation: { artifactLocation: { uri: 'routes.ts' }, region: { startLine: 5 } } }] }, { ruleId: 'UNKNOWN', message: { text: 'unmapped' }, locations: [{ physicalLocation: { artifactLocation: { uri: 'missing.ts' }, region: { startLine: 1 } } }] }] }] }));
   const { graph: g } = scan('--sarif', path.join(dir, 'findings.sarif'));
+  assert(!g.nodes.some(n => n.file?.startsWith('.agents/') || n.file?.startsWith('.claude/')));
   const node = label => g.nodes.find(n => n.label === label), endpoint = label => g.nodes.find(n => n.label === label && n.kind === 'endpoint');
   assert.equal(endpoint('POST /v1/reset').framework, 'express');
   assert.equal(endpoint('POST /v1/reset').confidence, 'resolved');
