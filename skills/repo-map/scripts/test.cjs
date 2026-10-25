@@ -1,5 +1,82 @@
 'use strict';
-const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),cp=require('node:child_process'),assert=require('node:assert/strict');
-const dir=fs.mkdtempSync(path.join(os.tmpdir(),'repo-map-test-'));
-try{fs.writeFileSync(path.join(dir,'service.ts'),`export class Store { read(){ return 1; } }\nexport function lookup(){return new Store().read();}\n`);fs.writeFileSync(path.join(dir,'routes.ts'),`import {lookup} from './service';\nconst router:any={};\nfunction handler(){return lookup();}\nrouter.post('/reset', handler);\nfunction unused(){return 'x';}\n`);fs.writeFileSync(path.join(dir,'findings.sarif'),JSON.stringify({runs:[{tool:{driver:{name:'fixture'}},results:[{ruleId:'TEST',level:'error',message:{text:'</script><script>window.bad=true</script>'},locations:[{physicalLocation:{artifactLocation:{uri:'routes.ts'},region:{startLine:3}}}]}]}]}));
-const out=path.join(dir,'out');cp.execFileSync(process.execPath,[path.join(__dirname,'analyze.cjs'),'--repo',dir,'--out',out,'--sarif',path.join(dir,'findings.sarif')],{stdio:'pipe'});const g=JSON.parse(fs.readFileSync(path.join(out,'graph.json'))),n=label=>g.nodes.find(n=>n.label===label);assert(n('Store'));assert(n('read'));assert(n('lookup'));assert(n('handler'));assert(n('POST /reset'));assert(g.edges.some(e=>e.source===n('handler').id&&e.target===n('lookup').id&&e.type==='calls'));assert(g.edges.some(e=>e.source===n('POST /reset').id&&e.target===n('handler').id&&e.confidence==='inferred'));assert(!g.edges.some(e=>e.source===n('handler').id&&e.target===n('unused').id));assert.equal(n('handler').findings[0].rule,'TEST');assert.equal(g.meta.findingsUnmatched,0);assert(!fs.readFileSync(path.join(out,'index.html'),'utf8').includes('</script><script>window.bad'));console.log('PASS: symbols, cross-file calls, endpoint candidates, no spurious call, SARIF mapping, HTML escaping.');if(process.env.REPO_MAP_KEEP_FIXTURE)console.log(dir);else fs.rmSync(dir,{recursive:true,force:true});}catch(e){console.error('Fixture retained:',dir);throw e;}
+const fs = require('node:fs'), os = require('node:os'), path = require('node:path'), cp = require('node:child_process'), assert = require('node:assert/strict');
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'repo-map-test-'));
+const write = (f, s) => { fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), s); };
+const git = (...args) => cp.execFileSync('git', ['-C', dir, ...args], { stdio: 'pipe' }).toString().trim();
+const scan = (...extra) => {
+  const stdout = cp.execFileSync(process.execPath, [path.join(__dirname, 'analyze.cjs'), '--repo', dir, '--out', path.join(dir, '.repo-map'), ...extra], { stdio: 'pipe' }).toString();
+  return { output: stdout, graph: JSON.parse(fs.readFileSync(path.join(dir, '.repo-map/graph.json'))) };
+};
+try {
+  assert(cp.execFileSync(process.execPath, [path.join(__dirname, 'analyze.cjs'), '--help']).toString().includes('--base'));
+  write('package.json', JSON.stringify({ dependencies: { next: '16.0.0' } }));
+  write('.gitignore', '.repo-map/\n');
+  write('service.ts', `export class Store { read(){ return 1; } }\nexport function lookup(){ return new Store().read(); }\nexport function obsolete(){ return 0; }\n`);
+  write('routes.ts', `import express, {Router as MakeRouter} from 'express';
+import {lookup, obsolete} from './service';
+export const router = MakeRouter();
+export function auth(req:any,res:any,next:any){ next(); }
+export function handler(){ return lookup(); }
+router.post('/reset', [auth, handler]);
+router.route('/profile').get(handler).post(auth, handler);
+router.get('/old', obsolete);
+const store = {get(a:string,b:unknown){}}; store.get('/not-an-endpoint', handler);
+const app = express(); app.get('port'); app.use('/v1', auth, router); app.use('/v2', router);
+app.get('/health', handler);
+`);
+  write('other.ts', `import express from 'express'; import {router} from './routes';
+const app=express(); app.use('/other',router);
+const orphan=express.Router(); orphan.get('/unmounted',()=>1);
+const dynamic=express.Router(); app.use(process.env.PREFIX,dynamic); dynamic.get('/dynamic',()=>1);
+`);
+  write('fast.ts', `import createFastify from 'fastify'; import {handler,auth} from './routes';
+const server=createFastify();
+async function plugin(instance:any){instance.get('/users', {preHandler:[auth]}, handler); instance.route({method:['POST','PUT'],url:'/users',handler});}
+server.register(plugin,{prefix:'/api'}); server.register(plugin,{prefix:'/api2'});
+server.get('/status', handler);
+`);
+  write('nest.ts', `import {Controller as C,Get,Post} from '@nestjs/common';
+@C('accounts') export class Accounts { @Get(':id') find(){return 1;} @Post() create(){return 2;} }
+`);
+  write('app/(public)/api/users/[id]/route.ts', `export async function GET(){return new Response('ok');}\nexport const POST=()=>new Response('created');\nexport default function(){return 1;}\nexport const ALL=()=>0;`);
+  write('app/_private/route.ts', `export function GET(){return 1;}`);
+  write('fake/app/api/route.ts', `export function GET(){return 1;}`);
+  write('common.cjs', `const express=require('express'); const {Router}=require('express'); const app=express(); const router=Router(); router.get('/cjs',()=>1); app.use('/common',router);`);
+  write('findings.sarif', JSON.stringify({ runs: [{ tool: { driver: { name: 'fixture' } }, results: [{ ruleId: 'TEST', level: 'error', message: { text: '</script><script>window.bad=true</script>' }, locations: [{ physicalLocation: { artifactLocation: { uri: 'routes.ts' }, region: { startLine: 5 } } }] }, { ruleId: 'UNKNOWN', message: { text: 'unmapped' }, locations: [{ physicalLocation: { artifactLocation: { uri: 'missing.ts' }, region: { startLine: 1 } } }] }] }] }));
+  const { graph: g } = scan('--sarif', path.join(dir, 'findings.sarif'));
+  const node = label => g.nodes.find(n => n.label === label), endpoint = label => g.nodes.find(n => n.label === label && n.kind === 'endpoint');
+  assert.equal(endpoint('POST /v1/reset').framework, 'express');
+  assert.equal(endpoint('POST /v1/reset').confidence, 'resolved');
+  assert(endpoint('POST /v2/reset')); assert(endpoint('POST /other/reset'));
+  assert(endpoint('GET /v1/profile')); assert(endpoint('POST /v1/profile'));
+  assert(!endpoint('GET /not-an-endpoint')); assert(!endpoint('GET port'));
+  assert.equal(endpoint('GET /unmounted').prefixResolved, false);
+  assert.equal(endpoint('GET /dynamic').confidence, 'inferred');
+  assert(endpoint('GET /api/users')); assert(endpoint('PUT /api2/users')); assert(endpoint('GET /status'));
+  assert.equal(endpoint('GET /accounts/:id').framework, 'nestjs');
+  assert.equal(endpoint('GET /accounts/:id').confidence, 'inferred');
+  assert(endpoint('POST /accounts'));
+  assert.equal(endpoint('GET /api/users/[id]').framework, 'nextjs');
+  assert(endpoint('POST /api/users/[id]')); assert(!endpoint('ALL /api/users/[id]')); assert(!endpoint('GET /_private')); assert(!endpoint('GET /fake/app/api'));
+  assert(endpoint('GET /common/cjs'));
+  assert(g.edges.some(e => e.source === node('handler').id && e.target === node('lookup').id && e.type === 'calls'));
+  assert(g.edges.some(e => e.source === endpoint('POST /v1/reset').id && e.target === node('auth').id && e.type === 'registers middleware'));
+  assert(g.edges.some(e => e.source === endpoint('POST /v1/reset').id && e.target === node('handler').id && e.type === 'registers handler'));
+  assert.equal(node('handler').findings[0].rule, 'TEST'); assert.equal(g.meta.findingsUnmatched, 1);
+  const html = fs.readFileSync(path.join(dir, '.repo-map/index.html'), 'utf8');
+  assert(!html.includes('</script><script>window.bad')); assert(!html.includes('/*CYTOSCAPE*/')); assert(!/<script[^>]+src=/.test(html));
+  git('init', '-q'); git('add', '.'); git('-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '-qm', 'baseline');
+  write('service.ts', `\n\nexport class Store { read(){ return 2; } }\nexport function lookup(){ return new Store().read(); }\nexport function added(){return 3;}\n`);
+  const result = scan('--base', 'HEAD'); const changed = result.graph;
+  const find = label => changed.nodes.find(n => n.label === label);
+  assert.equal(find('read').change, 'modified'); assert.equal(find('lookup').change, 'unchanged');
+  assert.equal(find('obsolete').change, 'removed'); assert.equal(find('obsolete').snapshot, 'base');
+  assert.equal(find('added').change, 'added'); assert.equal(find('handler').affected, true);
+  assert.equal(find('GET /v1/old').affected, true);
+  assert(changed.edges.some(e => e.target === find('obsolete').id && e.change === 'removed'));
+  assert(changed.comparison.summary.modified > 0); assert.equal(changed.comparison.target, 'working-tree');
+  assert.throws(() => scan('--base', '--invalid'));
+  assert.throws(() => scan('--base', 'missing-ref'));
+  console.log('PASS: Express/Fastify mounts and middleware, NestJS/Next.js adapters, false-positive rejection, static calls, SARIF, offline escaping, Git identities and impact.');
+  if (process.env.REPO_MAP_KEEP_FIXTURE) console.log(dir); else fs.rmSync(dir, { recursive: true, force: true });
+} catch (error) { console.error('Fixture retained:', dir); throw error; }

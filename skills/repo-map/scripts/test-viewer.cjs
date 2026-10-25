@@ -1,0 +1,35 @@
+'use strict';
+const assert = require('node:assert/strict'), fs = require('node:fs'), cp = require('node:child_process'), path = require('node:path'), os = require('node:os');
+const { JSDOM, VirtualConsole } = require('jsdom');
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'repo-map-viewer-'));
+try {
+  fs.writeFileSync(path.join(dir, 'code.ts'), 'export function helper(){return 1;}\nexport function handler(){return helper();}');
+  const git = (...args) => cp.execFileSync('git', ['-C', dir, ...args], { stdio: 'pipe' });
+  git('init', '-q'); git('add', '.'); git('-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '-qm', 'base');
+  fs.writeFileSync(path.join(dir, 'code.ts'), 'export function helper(){return 2;}\nexport function handler(){return helper();}');
+  cp.execFileSync(process.execPath, [path.join(__dirname, 'analyze.cjs'), '--repo', dir, '--out', path.join(dir, 'out'), '--base', 'HEAD'], { stdio: 'pipe' });
+  const graph = JSON.parse(fs.readFileSync(path.join(dir, 'out/graph.json'))), html = fs.readFileSync(path.join(dir, 'out/index.html'), 'utf8');
+  const errors = [], vc = new VirtualConsole(); vc.on('jsdomError', e => errors.push(e.message));
+  const dom = new JSDOM(html, { runScripts: 'dangerously', virtualConsole: vc, beforeParse(w) { w.__REPO_MAP_HEADLESS__ = true; w.URL.createObjectURL = () => ''; } });
+  const w = dom.window, d = w.document, $ = id => d.getElementById(id), evaluate = code => w.eval(code);
+  assert.equal(evaluate('cy.nodes().length'), 1);
+  const moduleId = graph.nodes.find(n => n.kind === 'module').id;
+  evaluate(`cy.getElementById(${JSON.stringify(moduleId)}).emit('tap')`);
+  [...d.querySelectorAll('#detail button')].find(b => b.textContent === 'Expand contents').click();
+  assert.equal(evaluate('cy.nodes().length'), 3);
+  assert.equal(evaluate('cy.nodes().filter(n => n.isParent()).length'), 1);
+  $('search').value = 'handler'; $('search').dispatchEvent(new w.Event('input'));
+  d.querySelector('#results button').click();
+  assert($('detail').textContent.includes('handler')); assert($('detail').textContent.includes('potentially affected'));
+  assert(d.querySelector('#detail a').href.startsWith('vscode://file/'));
+  $('mode').value = 'downstream'; $('mode').dispatchEvent(new w.Event('change'));
+  assert.equal(evaluate('cy.nodes().length'), 3);
+  evaluate('cy.nodes().filter(n => !n.isParent()).first().emit("mouseover")'); assert.equal($('tooltip').style.display, 'block');
+  evaluate('cy.nodes().first().emit("mouseout")'); assert.equal($('tooltip').style.display, 'none');
+  $('mode').value = 'impact'; $('mode').dispatchEvent(new w.Event('change'));
+  assert($('comparison').textContent.includes('potentially affected')); assert.equal(evaluate('cy.nodes().length'), 3);
+  $('layout').click(); $('plus').click(); $('minus').click(); $('fit').click();
+  $('reset').click(); assert.equal(evaluate('cy.nodes().length'), 1); assert(!$('detail').textContent.includes('handler'));
+  assert.deepEqual(errors, []); evaluate('cy.destroy()'); dom.window.close();
+  console.log('PASS: bundled Cytoscape in DOM/headless mode, grouping, selection, expansion, search, traversal, hover, impact, reset and controls.');
+} finally { fs.rmSync(dir, { recursive: true, force: true }); }
