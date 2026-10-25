@@ -11,7 +11,7 @@ Agentcraft publishes portable [Agent Skills](https://agentskills.io/) that help 
 | [Plain Language UX](skills/plain-language-ux/) | Detect technical jargon, vague actions, ambiguous labels, unclear feedback, and inconsistent wording; recommend language that fits the intended audience without losing accuracy. |
 | [Enterprise Product UX](skills/enterprise-product-ux/) | Design and review enterprise workflows, complex data interfaces, permissions, accessibility, and operational UX. |
 | [Session Isolation Security](skills/session-isolation-security/) | Assess cross-user authorization, IDOR/BOLA, tenant isolation, roles, and session lifecycle; define reproducible security regressions. |
-| [Repository Map](skills/repo-map/) | Explore interactive JavaScript/TypeScript code relationships, endpoint candidates, source details, and imported SARIF security findings. |
+| [Repository Map](skills/repo-map/) | Explore grouped JavaScript/TypeScript code graphs, framework-aware endpoints, Git change impact, source details, and imported SARIF findings. |
 
 ## Install
 
@@ -21,7 +21,7 @@ For Repository Map:
 npx skills add lyrisoft/agentcraft --skill repo-map
 ```
 
-Run `npm ci --ignore-scripts` in the installed skill directory if TypeScript is not already available, then ask your agent to map the repository. Reports are local HTML snapshots.
+Run `npm ci --omit=dev --ignore-scripts` in the installed skill directory to install the pinned TypeScript and Cytoscape dependencies, then ask your agent to map the repository. Reports are self-contained local HTML snapshots. Express, Fastify, NestJS and Next.js App Router patterns are supported with explicit analysis limits. Add `--base main` (or a commit SHA) to compare the working tree and explore potential change impact.
 
 For session-isolation-security:
 
