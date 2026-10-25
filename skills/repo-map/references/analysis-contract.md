@@ -25,7 +25,7 @@ Do not treat unidentified get/post receivers as generic endpoint candidates. Kno
 
 ## Source extraction
 
-JS, JSX, TS, TSX, MJS, CJS, MTS and CTS files are eligible. Declaration files and package/tsconfig JSON are read to support resolution/configuration, but declaration-file symbols are not emitted. Git tracked and nonignored untracked files are read; non-Git fallback skips hidden/dependency/build/vendor/coverage directories. Symlinks and outside-root source targets are excluded. Source and config reads use a virtual compiler host. No baseline checkout or application execution occurs.
+JS, JSX, TS, TSX, MJS, CJS, MTS and CTS files are eligible. Declaration files and package/tsconfig JSON are read to support resolution/configuration, but declaration-file symbols are not emitted. Git tracked and nonignored untracked files are read; non-Git fallback skips hidden/dependency/build/vendor/coverage directories. Symlinks, outside-root source targets and installed tooling under .agents/.claude/.codex/.repo-map are excluded from current and baseline extraction. Source and config reads use a virtual compiler host. No baseline checkout or application execution occurs.
 
 TypeScript AST/symbols cover functions, classes/class expressions, methods/accessors/constructors, static imports, resolvable calls/new expressions and class heritage. Root tsconfig options and local config extends are read; per-project monorepo compiler configurations are not individually merged. Baseline extraction uses baseline tracked text, with compiler standard libraries from the installed toolchain. Dependencies under repository node_modules are not read by the compiler host, so external type resolution can be incomplete.
 
@@ -43,7 +43,11 @@ Potential impact traverses incoming calls, registrations and other non-container
 
 SARIF physical locations support repository-relative/absolute file URIs and artifact indexes. Base URI identifiers and scanner-specific mappings are not resolved. Findings attach only to current symbols; unmatched results are counted.
 
-Cytoscape uses compound module/class groups, a force layout, drag/pan/zoom, neighbour highlighting, source details and a keyboard-accessible list of up to 100 requested nodes. Rendering includes up to 500 requested nodes plus ancestors. Filtering retains dragged leaf positions; Arrange recomputes layout. The full extracted graph remains in JSON. Large repositories may require future incremental indexing and virtualization.
+The viewer builds indexed incoming/outgoing/containment maps once. Architecture initially skips single-folder wrapper paths and displays immediate folder/file children, with source-path aggregates and import counts between visible groups. Folder names are source organization, not inferred business domains. Counts can include retained baseline nodes when a comparison exists.
+
+Every catalog and folder listing is paginated at 12 items. Selecting a file/class browses its direct symbols; selecting a function/endpoint opens a focused trace of at most 12 neighbours plus the selected root (six neighbours on narrow screens). Immediate callers and dependencies are balanced up to six each; additional relationships remain accessible in paginated Incoming/Outgoing lists of eight. Parallel edges in a trace are combined into one labelled count; individual source locations remain in these connection lists. These lists also include containment/import evidence. Bounded multi-hop traces do not promise complete reachability coverage. Global search indexes code labels and paths; it displays paged matches rather than putting all matches on the canvas.
+
+The canvas uses explicit readable grid/trace positions, tooltip evidence, clickable nodes, drag/pan/zoom, Back and breadcrumbs. Fit clamps automatic zoom to a readable scale instead of shrinking hundreds of nodes to fit. Small viewports may require panning; the detail pane moves below the graph. A report embeds the navigation model, viewer code and Cytoscape, with no network dependency. The full graph remains available in JSON. This release does not provide incremental source indexing.
 
 ## Extension boundary
 

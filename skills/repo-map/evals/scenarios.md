@@ -13,3 +13,7 @@
 10. Compare a Git commit against modified working files with --base. Insert lines above an unchanged named function, change a dependency and delete another symbol. Verify stable named IDs, upstream potential impact and retained baseline locations/relationships.
 11. Attempt an unavailable base ref. Fail clearly without substituting HEAD, changing branches or executing repository scripts.
 12. Use the grouped Cytoscape graph with mouse and keyboard. Expand a class, drag a function, filter and restore the view, inspect evidence and removed-node details. Check narrow viewport rendering separately.
+
+13. Open a report with at least 44,000 nodes and 110,000 relationships. Verify that initial rendering shows folder summaries, not hundreds of files; folder drilldown and endpoint catalogs remain paginated and labels remain readable.
+14. Select a function with over 1,000 callers and 100 dependencies. Verify balanced focused neighbours, an explicit overflow message, complete paginated connection lists and step-by-step navigation with Back.
+15. Place copies of the skill in tracked .agents/.claude/.codex folders. Verify those installed tools do not appear in current or baseline architecture.

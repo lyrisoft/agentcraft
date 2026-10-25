@@ -1,4 +1,4 @@
 interface:
   display_name: "Repository Map"
-  short_description: "Explore code graphs, endpoints and Git change impact"
-  default_prompt: "Use $repo-map to map this repository and inspect the impact of changes against main."
+  short_description: "Explore architecture and readable endpoint traces"
+  default_prompt: "Use $repo-map to map this repository, browse its architecture and trace an endpoint."

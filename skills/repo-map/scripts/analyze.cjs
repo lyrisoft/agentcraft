@@ -15,7 +15,7 @@ for (const candidate of [opt.typescript, process.env.REPO_MAP_TYPESCRIPT, path.j
 if (!ts) throw Error('TypeScript compiler API missing. Run npm ci --ignore-scripts in the skill folder, or pass --typescript /path/to/typescript.');
 const rel = p => path.relative(root, p).split(path.sep).join('/');
 const git = (...params) => cp.execFileSync('git', ['-C', root, ...params], { maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] }).toString();
-const excluded = p => /(^|\/)(node_modules|dist|build|coverage|vendor|\.git)(\/|$)/.test(p) || path.resolve(root, p) === out || path.resolve(root, p).startsWith(out + path.sep);
+const excluded = p => /(^|\/)(node_modules|dist|build|coverage|vendor|\.git|\.agents|\.claude|\.codex|\.repo-map)(\/|$)/.test(p) || path.resolve(root, p) === out || path.resolve(root, p).startsWith(out + path.sep);
 const eligible = p => /\.[cm]?[jt]sx?$/.test(p) || /(^|\/)(package|tsconfig[^/]*)\.json$/.test(p);
 let files;
 try { files = git('ls-files', '-co', '--exclude-standard', '-z').split('\0').filter(Boolean); }
@@ -78,7 +78,7 @@ const safe = JSON.stringify(data).replace(/</g, '\\u003c').replace(/\u2028/g, '\
 const template = fs.readFileSync(path.join(__dirname, '../assets/viewer.html'), 'utf8');
 fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, 'graph.json'), JSON.stringify(data, null, 2));
-fs.writeFileSync(path.join(out, 'index.html'), template.replace('/*CYTOSCAPE*/', () => renderer.replace(/<\/script/gi, '<\\/script')).replace('/*GRAPH_DATA*/', () => safe));
+fs.writeFileSync(path.join(out, 'index.html'), template.replace('/*CYTOSCAPE*/', () => renderer.replace(/<\/script/gi, '<\\/script')).replace('/*NAVIGATION*/', () => fs.readFileSync(path.join(__dirname, '../assets/navigation.js'), 'utf8')).replace('/*VIEWER*/', () => fs.readFileSync(path.join(__dirname, '../assets/viewer.js'), 'utf8')).replace('/*GRAPH_DATA*/', () => safe));
 console.log(JSON.stringify({ output: out, nodes: data.nodes.length, edges: data.edges.length, comparison: comparison?.summary, ...data.meta }, null, 2));
 
 }

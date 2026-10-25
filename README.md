@@ -11,7 +11,7 @@ Agentcraft publishes portable [Agent Skills](https://agentskills.io/) that help 
 | [Plain Language UX](skills/plain-language-ux/) | Detect technical jargon, vague actions, ambiguous labels, unclear feedback, and inconsistent wording; recommend language that fits the intended audience without losing accuracy. |
 | [Enterprise Product UX](skills/enterprise-product-ux/) | Design and review enterprise workflows, complex data interfaces, permissions, accessibility, and operational UX. |
 | [Session Isolation Security](skills/session-isolation-security/) | Assess cross-user authorization, IDOR/BOLA, tenant isolation, roles, and session lifecycle; define reproducible security regressions. |
-| [Repository Map](skills/repo-map/) | Explore grouped JavaScript/TypeScript code graphs, framework-aware endpoints, Git change impact, source details, and imported SARIF findings. |
+| [Repository Map](skills/repo-map/) | Explore JavaScript/TypeScript architecture through folder drilldown, paged endpoint catalogs, readable focused traces, Git change impact and imported SARIF findings. |
 
 ## Install
 
@@ -21,7 +21,7 @@ For Repository Map:
 npx skills add lyrisoft/agentcraft --skill repo-map
 ```
 
-Run `npm ci --omit=dev --ignore-scripts` in the installed skill directory to install the pinned TypeScript and Cytoscape dependencies, then ask your agent to map the repository. Reports are self-contained local HTML snapshots. Express, Fastify, NestJS and Next.js App Router patterns are supported with explicit analysis limits. Add `--base main` (or a commit SHA) to compare the working tree and explore potential change impact.
+Run `npm ci --omit=dev --ignore-scripts` in the installed skill directory to install the pinned TypeScript and Cytoscape dependencies, then ask your agent to map the repository. Reports are self-contained local HTML snapshots. Architecture starts with source-folder summaries; open a folder or select an endpoint to explore readable connections. Large catalogs and connection lists are paginated. Express, Fastify, NestJS and Next.js App Router patterns are supported with explicit analysis limits. Add `--base main` (or a commit SHA) to compare the working tree and explore potential change impact.
 
 For session-isolation-security:
 

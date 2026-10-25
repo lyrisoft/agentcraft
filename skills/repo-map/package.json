@@ -1,6 +1,6 @@
 {
   "name": "repo-map-skill",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Local interactive repository map",
   "dependencies": {
@@ -8,7 +8,7 @@
     "cytoscape": "3.34.4"
   },
   "scripts": {
-    "test": "node scripts/test.cjs && node scripts/test-viewer.cjs"
+    "test": "node scripts/test.cjs && node scripts/test-scale.cjs && node scripts/test-viewer.cjs"
   },
   "devDependencies": {
     "jsdom": "26.1.0"
