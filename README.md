@@ -11,8 +11,17 @@ Agentcraft publishes portable [Agent Skills](https://agentskills.io/) that help 
 | [Plain Language UX](skills/plain-language-ux/) | Detect technical jargon, vague actions, ambiguous labels, unclear feedback, and inconsistent wording; recommend language that fits the intended audience without losing accuracy. |
 | [Enterprise Product UX](skills/enterprise-product-ux/) | Design and review enterprise workflows, complex data interfaces, permissions, accessibility, and operational UX. |
 | [Session Isolation Security](skills/session-isolation-security/) | Assess cross-user authorization, IDOR/BOLA, tenant isolation, roles, and session lifecycle; define reproducible security regressions. |
+| [Repository Map](skills/repo-map/) | Explore interactive JavaScript/TypeScript code relationships, endpoint candidates, source details, and imported SARIF security findings. |
 
 ## Install
+
+For Repository Map:
+
+```bash
+npx skills add lyrisoft/agentcraft --skill repo-map
+```
+
+Run `npm ci --ignore-scripts` in the installed skill directory if TypeScript is not already available, then ask your agent to map the repository. Reports are local HTML snapshots.
 
 For session-isolation-security:
 
@@ -79,6 +88,12 @@ Installing a skill or adding repository instructions is not a deterministic CI e
 
 ```text
 skills/
+  repo-map/
+    SKILL.md
+    package.json
+    scripts/
+    assets/
+    references/
   plain-language-ux/
     SKILL.md
     README.md
