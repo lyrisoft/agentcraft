@@ -1,0 +1,13 @@
+interface:
+  display_name: Repository Map
+  short_description: Explore code relationships and security findings
+  default_prompt: Use $repo-map to build an interactive map of this repository.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
